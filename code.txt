@@ -1,0 +1,143 @@
+#by default, alphanumeric values are interpreted as LABELS
+#numeric values as numbers
+# $ marks a character
+# * marks a pointer
+
+# two data types: pointers and values
+def Object { x : 0 , y : 0 }
+
+func move_object
+	x pointer
+	1 add
+	y pointer
+	1 add
+	return
+
+func entry
+	# Obj
+	Object{ x:0, y:0 } 
+	
+	return
+	
+	
+	
+#######################################
+# every token space seperated
+
+def Object x 0 y 0
+
+func move_object
+	x pointer 
+	1 add
+	y pointer
+	1 add
+	return 
+	
+func entry
+	list
+	
+	Object + x -> 0 . y -> 0 .
+	##0 set
+	##y pointer 
+	##0 set
+	
+	return 
+	
+	
+	
+	
+	
+#########################################
+
+define Object x 0 y 0
+
+func move_object
+	x -> 1 add 
+	y -> 1 add
+	return
+	
+func main_loop
+		duplicate
+		enemies length get
+		sub
+		return jump_zero
+		pop
+		enemies get
+		move_object jump
+		main_loop jump
+	
+func entry
+	define enemies
+	0
+	mainloop jump
+	
+	
+	
+	
+##########################################
+
+define Object x 0 y 0
+
+func move_enemy(enemy){
+	enemy.x += 1
+	enemy.y += 1
+}
+
+func main(){
+	enemies = new List
+	for enemy in enemies{
+		move_enemy(enemy)
+	}
+}
+
+###########################################
+
+define Object x 0 y 0
+
+func move_enemy
+	$x -> 1 +=  
+	$y -> 1 +=
+	
+func main
+	list new enemies set
+	enemies foreach
+		item
+		
+		
+		
+##############################################
+
+basic data types:
+	int
+	string
+	list
+	dict -> struct
+	bool
+	
+	
+DEFINE Object x 0 y 0
+	
+
+FUNC main
+	List new $enemies set (adds List object to stack, makes a new one, adds $enemies label to stack, sets enemies to the new list)
+	@enemies 0 index 
+	@enemies -1 index
+	@enemies length
+	@enemies 0 next pop next pop
+	
+	
+	Dict new $options set 
+	@options $test get
+	@options $an_option in
+	@options $name 'James 'Tulk set ('marks a string, if called and the item on the stack is also a string, concatenates with a space
+	
+	@Object new $main_object set
+	@main_object $x get
+	@main_object $x 0 set
+	@main_object $x -> 
+	3 +=
+	
+	main call
+	
+	
+	return
