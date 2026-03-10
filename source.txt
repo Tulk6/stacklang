@@ -1,26 +1,8 @@
-DEFINE Object x 0 y 0 END
-	
-
-FUNC main END
-	List new $enemies set
-	@enemies 0 index 
-	@enemies -1 index
-	@enemies length
-	@enemies 0 next pop next pop
-	
-	
-	Dict new $options set 
-	@options $test get
-	@options $an_option in
-	@options $name 'James 'Tulk set
-	
-	@Object new $main_object set
-	@main_object $x get
-	@main_object $x 0 set
-	@main_object $x -> 
-	3 +=
-	
-	main call
-	
-	
-	return
+2.998e8 $c set 
+>storing_speed_of_light_in_$c
+400e-9 $wavelength set 
+>storing >400e9 >as >$wavelength
+@c @wavelength / $frequency set 
+>dividing_c_by_wavelength_and_storing_result_in_$frequency
+@frequency 
+>pushing_$frequency
