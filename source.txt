@@ -3,6 +3,9 @@ STRUCT $Object $x 0 $y 0 END
 FUNC $test
 	0 index
 	$x get
+	100 add
+	$x rotate set
+	pop
 	return
 
 FUNC $main
@@ -16,4 +19,4 @@ FUNC $main
 		@Object new $x 300 set $y 0 set
 		append
 	
-	@test call
+	@test call @test call

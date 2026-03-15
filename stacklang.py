@@ -133,7 +133,7 @@ class Lexer:
 
             #maths
             '+': Token(TokenKind.SUM, word, None, self.word_index),
-            'sum': Token(TokenKind.SUM, word, None, self.word_index),
+            'add': Token(TokenKind.SUM, word, None, self.word_index),
             '-': Token(TokenKind.SUBTRACT, word, None, self.word_index),
             'subtract': Token(TokenKind.SUBTRACT, word, None, self.word_index),
             '/': Token(TokenKind.DIVIDE, word, None, self.word_index),
@@ -250,6 +250,10 @@ class Interpreter:
     def peek(self, i=1):
         return self.program_stack[-i]
 
+    def rotate(self):
+        tail = self.program_stack.pop(-2)
+        self.program_stack.append(tail)
+
     def interpret(self):
         self.token_index = 0
         self.halt = False
@@ -264,7 +268,7 @@ class Interpreter:
         self.find_definitions()
         print(self.definitions)
 
-        self.token_index = self.definitions['main']
+        self.token_index = self.definitions['main']+1
         while not self.halt and self.token_index < len(self.tokens):
             token = self.tokens[self.token_index]
             self.interpret_token(token)
@@ -294,6 +298,7 @@ class Interpreter:
             self.token_index += 1
 
     def interpret_token(self, token):
+        print(self.program_stack)
         print(token)
         if token.kind in (TokenKind.FLOAT, TokenKind.INTEGER, TokenKind.STRING, TokenKind.LABEL):
             self.push(token.literal)
@@ -355,6 +360,8 @@ class Interpreter:
 
         elif token.kind is TokenKind.POP:
             self.pop()
+        elif token.kind is TokenKind.ROTATE:
+            self.rotate()
 
     def advance(self):
         self.token_index += 1
