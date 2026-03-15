@@ -10,7 +10,7 @@ class TokenKind(enum.Enum):
     LABEL = 5
 
     #keywords
-    DEFINE = 6
+    STRUCT = 6
     FUNC = 7
     END = 8
 
@@ -20,10 +20,13 @@ class TokenKind(enum.Enum):
 
     #builtins
     NEW = 11
-    SET = 12
-    GET = 33
+    DEFINE = 12
+    LOOKUP = 33
 
     INDEX = 13
+    GET = 39
+    SET = 40
+    APPEND = 41
     LENGTH = 14
     NEXT = 15
     IN = 16
@@ -106,7 +109,7 @@ class Lexer:
     def is_keyword(self, word):
         keywords = {
             #defines
-            'STRUCT': Token(TokenKind.DEFINE, word, None, self.word_index),
+            'STRUCT': Token(TokenKind.STRUCT, word, None, self.word_index),
             'FUNC': Token(TokenKind.FUNC, word, None, self.word_index),
             'END': Token(TokenKind.END, word, None, self.word_index),
             #datatypes
@@ -116,14 +119,17 @@ class Lexer:
 
             #structs/variables
             'new': Token(TokenKind.NEW, word, None, self.word_index),
-            'set': Token(TokenKind.SET, word, None, self.word_index),
-            'get': Token(TokenKind.GET, word, None, self.word_index),
+            'define': Token(TokenKind.DEFINE, word, None, self.word_index),
+            'lookup': Token(TokenKind.LOOKUP, word, None, self.word_index),
 
             #object spec
             'index': Token(TokenKind.INDEX, word, None, self.word_index),
+            'get': Token(TokenKind.GET, word, None, self.word_index),
+            'set': Token(TokenKind.SET, word, None, self.word_index),
             'length': Token(TokenKind.LENGTH, word, None, self.word_index),
             'next': Token(TokenKind.NEXT, word, None, self.word_index),
             'in': Token(TokenKind.IN, word, None, self.word_index),
+            'append': Token(TokenKind.APPEND, word, None, self.word_index),
 
             #maths
             '+': Token(TokenKind.SUM, word, None, self.word_index),
@@ -188,15 +194,61 @@ class Lexer:
                 raise SyntaxError(word)
 
 
+class Struct:
+    def __init__(self, fields):
+        self.fields = fields
+
+    def get(self, field):
+        return self.fields[field]
+
+    def set(self, field, value):
+        if field in self.fields.keys():
+            self.fields[field] = value
+
+    def new(self):
+        return Struct(self.fields.copy())
+
+    def __repr__(self):
+        return f"<STRUCT {self.fields}>"
+
+class List:
+    def __init__(self, values=None):
+        if values is None:
+            self.values = []
+        else:
+            self.values = values
+
+    def index(self, index):
+        return self.values[index]
+
+    def append(self, value):
+        self.values.append(value)
+
+    def new(self):
+        return List(values=self.values.copy())
+
+    def __repr__(self):
+        return f"<LIST {','.join([repr(v) for v in self.values])}>"
+
+
 class Interpreter:
     def __init__(self, tokens):
         self.tokens = tokens
+
+    def push_jump(self, index):
+        self.jump_stack.append(index)
+
+    def pop_jump(self):
+        return self.jump_stack[-1]
 
     def push(self, value):
         self.program_stack.append(value)
 
     def pop(self):
         return self.program_stack.pop(-1)
+
+    def peek(self, i=1):
+        return self.program_stack[-i]
 
     def interpret(self):
         self.token_index = 0
@@ -207,14 +259,42 @@ class Interpreter:
         
         self.jump_stack = []
         
-        self.definitions = {}
-        
+        self.definitions = {'List': List()}
+
+        self.find_definitions()
+        print(self.definitions)
+
+        self.token_index = self.definitions['main']
         while not self.halt and self.token_index < len(self.tokens):
             token = self.tokens[self.token_index]
             self.interpret_token(token)
             self.token_index += 1
 
+    def find_definitions(self):
+        while not self.halt and self.token_index < len(self.tokens):
+            token = self.tokens[self.token_index]
+
+            if token.kind is TokenKind.FUNC:
+                function_name = self.advance().literal
+                self.definitions[function_name] = self.token_index
+
+            elif token.kind is TokenKind.STRUCT:
+                struct_fields = {}
+                struct_name = self.advance().literal
+                next_token = self.advance()
+                while next_token.kind is not TokenKind.END: 
+                    if next_token.kind is TokenKind.LABEL:
+                        field_name = next_token.literal
+                        field_value = self.advance().literal
+                        struct_fields[field_name] = field_value
+                    next_token = self.advance()
+
+                self.definitions[struct_name] = Struct(struct_fields)
+
+            self.token_index += 1
+
     def interpret_token(self, token):
+        print(token)
         if token.kind in (TokenKind.FLOAT, TokenKind.INTEGER, TokenKind.STRING, TokenKind.LABEL):
             self.push(token.literal)
         elif token.kind is TokenKind.STRING_CONTINUATION:
@@ -222,6 +302,30 @@ class Interpreter:
         elif token.kind is TokenKind.IDENTIFIER:
             label = token.literal
             self.push(self.definitions[label])
+            
+
+        elif token.kind is TokenKind.NEW:
+            struct_template = self.pop()
+            self.push(struct_template.new())
+
+        elif token.kind is TokenKind.GET:
+            field_name = self.pop()
+            struct = self.peek()
+            self.push(struct.get(field_name))
+        elif token.kind is TokenKind.SET:
+            field_value = self.pop()
+            field_name = self.pop()
+            struct = self.peek()
+            struct.set(field_name, field_value)
+
+        elif token.kind is TokenKind.INDEX:
+            index = self.pop()
+            _list = self.peek()
+            self.push(_list.index(index))
+        elif token.kind is TokenKind.APPEND:
+            value = self.pop()
+            _list = self.peek()
+            _list.append(value)
 
         elif token.kind is TokenKind.SUM:
             self.push(self.pop()+self.pop())
@@ -232,14 +336,30 @@ class Interpreter:
         elif token.kind is TokenKind.SUBTRACT:
             self.push(-self.pop()+self.pop())
 
-        elif token.kind is TokenKind.SET:
+        elif token.kind is TokenKind.DEFINE:
             label = self.pop()
             data = self.pop()
             self.definitions[label] = data
 
-        elif token.kind is TokenKind.GET:
+        elif token.kind is TokenKind.LOOKUP:
             label = self.pop()
-            selfpush(self.definitions[label])
+            self.push(self.definitions[label])
+
+        elif token.kind is TokenKind.CALL:
+            function_index = self.pop()
+            self.push_jump(self.token_index)
+            self.token_index = function_index
+        elif token.kind is TokenKind.RETURN:
+            return_index = self.pop_jump()
+            self.token_index = return_index
+
+        elif token.kind is TokenKind.POP:
+            self.pop()
+
+    def advance(self):
+        self.token_index += 1
+        token = self.tokens[self.token_index]
+        return token
 
 
 source = open('source.txt', 'r').read()

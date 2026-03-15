@@ -1,8 +1,19 @@
-2.998e8 $c set 
->storing_speed_of_light_in_$c
-400e-9 $wavelength set 
->storing >400e9 >as >$wavelength
-@c @wavelength / $frequency set 
->dividing_c_by_wavelength_and_storing_result_in_$frequency
-@frequency 
->pushing_$frequency
+STRUCT $Object $x 0 $y 0 END
+
+FUNC $test
+	0 index
+	$x get
+	return
+
+FUNC $main
+	@List new $objects define
+
+	@objects 
+
+		@Object new $x 100 set $y 200 set
+		append
+		
+		@Object new $x 300 set $y 0 set
+		append
+	
+	@test call
